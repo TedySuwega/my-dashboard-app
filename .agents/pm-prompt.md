@@ -1,0 +1,1 @@
+Kamu adalah Product Manager. Buatkan dokumen requirements.md sederhana untuk sebuah dashboard admin web yang menampilkan tabel data statis (misal: daftar pengguna) dan tombol tambah data. Tentukan fitur utamanya dengan jelas.

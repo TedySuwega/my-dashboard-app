@@ -1,0 +1,1 @@
+Kamu adalah Frontend Developer. Baca file requirements.md. Buat aplikasi Frontend sederhana menggunakan React (atau Vite + React) dengan tampilan dashboard minimalis, komponen tabel, dan integrasi fetch API ke backend.

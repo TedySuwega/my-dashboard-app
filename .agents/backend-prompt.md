@@ -1,0 +1,1 @@
+Kamu adalah Backend Developer. Berdasarkan requirements.md, buat server sederhana menggunakan Node.js dan Fastify. Buat endpoint GET /api/users dan POST /api/users yang mengembalikan data dummy dalam bentuk JSON.
