@@ -2,14 +2,8 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 
 const fastify = Fastify({ logger: true });
+await fastify.register(cors, { origin: true, methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'] });
 
-// Register CORS
-await fastify.register(cors, {
-  origin: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
-});
-
-// In-memory data store (dummy data)
 let users = [
   { id: 1, name: 'Budi Santoso', email: 'budi@example.com', role: 'Admin', status: 'Aktif', joinedAt: '2024-01-15' },
   { id: 2, name: 'Siti Rahayu', email: 'siti@example.com', role: 'User', status: 'Aktif', joinedAt: '2024-02-20' },
@@ -20,108 +14,40 @@ let users = [
   { id: 7, name: 'Hendra Wijaya', email: 'hendra@example.com', role: 'Admin', status: 'Aktif', joinedAt: '2024-05-10' },
   { id: 8, name: 'Rina Kartika', email: 'rina@example.com', role: 'User', status: 'Aktif', joinedAt: '2024-05-22' },
 ];
-
 let nextId = users.length + 1;
 
-// Schemas
-const userSchema = {
-  type: 'object',
-  properties: {
-    id: { type: 'integer' },
-    name: { type: 'string' },
-    email: { type: 'string', format: 'email' },
-    role: { type: 'string', enum: ['Admin', 'User', 'Editor'] },
-    status: { type: 'string', enum: ['Aktif', 'Tidak Aktif'] },
-    joinedAt: { type: 'string' },
-  },
-};
+fastify.get('/api/users', async () => ({ success: true, total: users.length, data: users }));
 
-// GET /api/users — Return all users
-fastify.get('/api/users', {
-  schema: {
-    response: {
-      200: {
-        type: 'object',
-        properties: {
-          success: { type: 'boolean' },
-          total: { type: 'integer' },
-          data: { type: 'array', items: userSchema },
-        },
-      },
-    },
-  },
-}, async (request, reply) => {
-  return {
-    success: true,
-    total: users.length,
-    data: users,
-  };
-});
-
-// POST /api/users — Add a new user
-fastify.post('/api/users', {
-  schema: {
-    body: {
-      type: 'object',
-      required: ['name', 'email', 'role', 'status'],
-      properties: {
-        name: { type: 'string', minLength: 2 },
-        email: { type: 'string', format: 'email' },
-        role: { type: 'string', enum: ['Admin', 'User', 'Editor'] },
-        status: { type: 'string', enum: ['Aktif', 'Tidak Aktif'] },
-      },
-    },
-    response: {
-      201: {
-        type: 'object',
-        properties: {
-          success: { type: 'boolean' },
-          message: { type: 'string' },
-          data: userSchema,
-        },
-      },
-    },
-  },
-}, async (request, reply) => {
-  const { name, email, role, status } = request.body;
-
-  // Check duplicate email
-  const exists = users.find((u) => u.email === email);
-  if (exists) {
-    return reply.status(409).send({
-      success: false,
-      message: 'Email sudah terdaftar.',
-    });
-  }
-
-  const today = new Date().toISOString().split('T')[0];
-  const newUser = {
-    id: nextId++,
-    name,
-    email,
-    role,
-    status,
-    joinedAt: today,
-  };
-
+fastify.post('/api/users', async (req, reply) => {
+  const { name, email, role, status } = req.body;
+  if (users.find(u => u.email === email))
+    return reply.status(409).send({ success: false, message: 'Email sudah terdaftar.' });
+  const newUser = { id: nextId++, name, email, role, status, joinedAt: new Date().toISOString().split('T')[0] };
   users.push(newUser);
-
-  return reply.status(201).send({
-    success: true,
-    message: 'Pengguna berhasil ditambahkan.',
-    data: newUser,
-  });
+  return reply.status(201).send({ success: true, message: 'Pengguna berhasil ditambahkan.', data: newUser });
 });
 
-// Health check
-fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+fastify.put('/api/users/:id', async (req, reply) => {
+  const id = parseInt(req.params.id);
+  const index = users.findIndex(u => u.id === id);
+  if (index === -1) return reply.status(404).send({ success: false, message: 'Pengguna tidak ditemukan.' });
+  const { name, email, role, status } = req.body;
+  if (users.find(u => u.email === email && u.id !== id))
+    return reply.status(409).send({ success: false, message: 'Email sudah digunakan pengguna lain.' });
+  users[index] = { ...users[index], name, email, role, status };
+  return { success: true, message: 'Pengguna berhasil diperbarui.', data: users[index] };
+});
 
-// Start server
+fastify.delete('/api/users/:id', async (req, reply) => {
+  const id = parseInt(req.params.id);
+  const index = users.findIndex(u => u.id === id);
+  if (index === -1) return reply.status(404).send({ success: false, message: 'Pengguna tidak ditemukan.' });
+  const deleted = users.splice(index, 1)[0];
+  return { success: true, message: `Pengguna "${deleted.name}" berhasil dihapus.`, data: deleted };
+});
+
+fastify.get('/health', async () => ({ status: 'ok' }));
+
 const PORT = process.env.PORT || 3001;
-try {
-  await fastify.listen({ port: PORT, host: '0.0.0.0' });
-  console.log(`🚀 Backend server running at http://localhost:${PORT}`);
-} catch (err) {
-  fastify.log.error(err);
-  process.exit(1);
-}
+await fastify.listen({ port: PORT, host: '0.0.0.0' });
+console.log(`🚀 Backend running at http://localhost:${PORT}`);

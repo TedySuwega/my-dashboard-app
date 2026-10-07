@@ -4,18 +4,33 @@ import Header from './components/Header.jsx';
 import StatsGrid from './components/StatsGrid.jsx';
 import UserTable from './components/UserTable.jsx';
 import AddUserModal from './components/AddUserModal.jsx';
+import EditUserModal from './components/EditUserModal.jsx';
+import DeleteConfirmModal from './components/DeleteConfirmModal.jsx';
 import Toast from './components/Toast.jsx';
 import { useUsers } from './hooks/useUsers.js';
 import { useToast } from './hooks/useToast.js';
 
 export default function App() {
-  const { users, loading, error, addUser } = useUsers();
+  const { users, loading, error, addUser, updateUser, deleteUser } = useUsers();
   const { toasts, addToast, removeToast } = useToast();
-  const [showModal, setShowModal] = useState(false);
+
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);   // user object or null
+  const [deletingUser, setDeletingUser] = useState(null); // user object or null
 
   const handleUserAdded = (newUser) => {
     addUser(newUser);
     addToast(`✨ Pengguna "${newUser.name}" berhasil ditambahkan!`, 'success');
+  };
+
+  const handleUserUpdated = (updatedUser) => {
+    updateUser(updatedUser);
+    addToast(`✏️ Pengguna "${updatedUser.name}" berhasil diperbarui!`, 'success');
+  };
+
+  const handleUserDeleted = (userId, message) => {
+    deleteUser(userId);
+    addToast(`🗑️ ${message}`, 'success');
   };
 
   return (
@@ -54,15 +69,36 @@ export default function App() {
           <UserTable
             users={users}
             loading={loading}
-            onAddUser={() => setShowModal(true)}
+            onAddUser={() => setShowAddModal(true)}
+            onEditUser={(user) => setEditingUser(user)}
+            onDeleteUser={(user) => setDeletingUser(user)}
           />
         </main>
       </div>
 
-      {showModal && (
+      {/* Add Modal */}
+      {showAddModal && (
         <AddUserModal
-          onClose={() => setShowModal(false)}
+          onClose={() => setShowAddModal(false)}
           onSuccess={handleUserAdded}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {editingUser && (
+        <EditUserModal
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onSuccess={handleUserUpdated}
+        />
+      )}
+
+      {/* Delete Confirm Modal */}
+      {deletingUser && (
+        <DeleteConfirmModal
+          user={deletingUser}
+          onClose={() => setDeletingUser(null)}
+          onSuccess={handleUserDeleted}
         />
       )}
 

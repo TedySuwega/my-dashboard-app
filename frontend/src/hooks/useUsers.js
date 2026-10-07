@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
+// Empty string = relative URL → works on Vercel via serverless function
+// Locally, Vite proxy forwards /api → http://localhost:3001
 const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 export function useUsers() {
@@ -31,5 +33,15 @@ export function useUsers() {
     setUsers((prev) => [newUser, ...prev]);
   }, []);
 
-  return { users, loading, error, refetch: fetchUsers, addUser };
+  const updateUser = useCallback((updatedUser) => {
+    setUsers((prev) =>
+      prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+    );
+  }, []);
+
+  const deleteUser = useCallback((userId) => {
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+  }, []);
+
+  return { users, loading, error, refetch: fetchUsers, addUser, updateUser, deleteUser };
 }

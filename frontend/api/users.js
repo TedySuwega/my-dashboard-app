@@ -1,5 +1,4 @@
-// Vercel Serverless Function — GET & POST /api/users
-// This wraps the Fastify endpoints for Vercel deployment
+// Vercel Serverless Function — GET, POST, PUT, DELETE /api/users
 
 let users = [
   { id: 1, name: 'Budi Santoso', email: 'budi@example.com', role: 'Admin', status: 'Aktif', joinedAt: '2024-01-15' },
@@ -14,45 +13,68 @@ let users = [
 
 let nextId = users.length + 1;
 
-export default function handler(req, res) {
-  // CORS headers
+const setCORSHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+};
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+export default function handler(req, res) {
+  setCORSHeaders(res);
 
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // Extract id from query (e.g. /api/users?id=3)
+  const id = req.query?.id ? parseInt(req.query.id) : null;
+
+  // GET /api/users
   if (req.method === 'GET') {
-    return res.status(200).json({
-      success: true,
-      total: users.length,
-      data: users,
-    });
+    return res.status(200).json({ success: true, total: users.length, data: users });
   }
 
+  // POST /api/users — Create
   if (req.method === 'POST') {
     const { name, email, role, status } = req.body || {};
-
-    if (!name || !email || !role || !status) {
+    if (!name || !email || !role || !status)
       return res.status(400).json({ success: false, message: 'Semua field wajib diisi.' });
-    }
 
-    const exists = users.find((u) => u.email === email);
-    if (exists) {
+    if (users.find((u) => u.email === email))
       return res.status(409).json({ success: false, message: 'Email sudah terdaftar.' });
-    }
 
-    const today = new Date().toISOString().split('T')[0];
-    const newUser = { id: nextId++, name, email, role, status, joinedAt: today };
+    const newUser = { id: nextId++, name, email, role, status, joinedAt: new Date().toISOString().split('T')[0] };
     users.push(newUser);
+    return res.status(201).json({ success: true, message: 'Pengguna berhasil ditambahkan.', data: newUser });
+  }
 
-    return res.status(201).json({
-      success: true,
-      message: 'Pengguna berhasil ditambahkan.',
-      data: newUser,
-    });
+  // PUT /api/users?id=:id — Update
+  if (req.method === 'PUT') {
+    if (!id) return res.status(400).json({ success: false, message: 'ID pengguna diperlukan.' });
+
+    const index = users.findIndex((u) => u.id === id);
+    if (index === -1) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+
+    const { name, email, role, status } = req.body || {};
+    if (!name || !email || !role || !status)
+      return res.status(400).json({ success: false, message: 'Semua field wajib diisi.' });
+
+    // Check duplicate email (exclude current user)
+    const duplicate = users.find((u) => u.email === email && u.id !== id);
+    if (duplicate) return res.status(409).json({ success: false, message: 'Email sudah digunakan pengguna lain.' });
+
+    users[index] = { ...users[index], name, email, role, status };
+    return res.status(200).json({ success: true, message: 'Pengguna berhasil diperbarui.', data: users[index] });
+  }
+
+  // DELETE /api/users?id=:id — Delete
+  if (req.method === 'DELETE') {
+    if (!id) return res.status(400).json({ success: false, message: 'ID pengguna diperlukan.' });
+
+    const index = users.findIndex((u) => u.id === id);
+    if (index === -1) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+
+    const deleted = users[index];
+    users.splice(index, 1);
+    return res.status(200).json({ success: true, message: `Pengguna "${deleted.name}" berhasil dihapus.`, data: deleted });
   }
 
   return res.status(405).json({ success: false, message: 'Method Not Allowed' });

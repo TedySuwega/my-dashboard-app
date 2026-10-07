@@ -24,7 +24,7 @@ function getInitials(name) {
     .toUpperCase();
 }
 
-export default function UserTable({ users, loading, onAddUser }) {
+export default function UserTable({ users, loading, onAddUser, onEditUser, onDeleteUser }) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
@@ -140,7 +140,8 @@ export default function UserTable({ users, loading, onAddUser }) {
                         id={`edit-btn-${user.id}`}
                         className="btn btn-ghost btn-sm btn-icon"
                         aria-label={`Edit ${user.name}`}
-                        title="Edit"
+                        title="Edit pengguna"
+                        onClick={() => onEditUser(user)}
                       >
                         ✏️
                       </button>
@@ -148,7 +149,8 @@ export default function UserTable({ users, loading, onAddUser }) {
                         id={`delete-btn-${user.id}`}
                         className="btn btn-danger btn-sm btn-icon"
                         aria-label={`Hapus ${user.name}`}
-                        title="Hapus"
+                        title="Hapus pengguna"
+                        onClick={() => onDeleteUser(user)}
                       >
                         🗑️
                       </button>
