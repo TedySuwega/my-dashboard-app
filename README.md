@@ -30,6 +30,70 @@ Proyek ini dibangun oleh 4 peran AI agent yang dieksekusi secara berurutan:
 
 ---
 
+
+---
+
+## 📖 Cara Menggunakan Multi-Agent untuk Membuat Web App Baru
+
+Folder [`.agents/`](file:///Users/tedysuwega/Workspace/MyProject/Learn/WebApp/Autonomous-Multi-Agent-Workflow/my-dashboard-app/.agents) berisi kumpulan **spesialisasi peran prompt**. AI Agent (Antigravity IDE / Cursor / Claude) bertindak sebagai **Orchestrator** yang membaca prompt tersebut dan mengeksekusinya secara berurutan (*pipeline sequence*):
+
+```mermaid
+graph LR
+    User[User Prompt] --> PM[1. PM Agent
+pm-prompt.md]
+    PM --> Req[requirements.md]
+    Req --> BE[2. Backend Agent
+backend-prompt.md]
+    BE --> API[API Endpoints & Data Model]
+    API --> FE[3. Frontend Agent
+ui-prompt.md]
+    Req --> FE
+    FE --> UI[React/Vite UI Components]
+    UI --> DevOps[4. DevOps Agent
+deploy-prompt.md]
+    DevOps --> Live[Vercel Deploy / Production]
+```
+
+### 📋 Template Master Prompt (Copy & Paste untuk Web App Baru)
+
+Jika Anda ingin membuat aplikasi web baru (misalnya **Expense Tracker**, **Task Manager**, dll.), cukup berikan prompt seperti di bawah ini ke AI:
+
+```markdown
+Kamu adalah agen AI pengembang perangkat lunak full-stack (AI Orchestrator). 
+Tolong bangun aplikasi baru: "[NAMA APLIKASI, misal: Expense Tracker App]" dari awal menggunakan alur kerja multi-agen secara berurutan.
+
+Deskripsi Aplikasi:
+[Jelaskan ide aplikasi secara singkat, misal:
+Aplikasi pencatat keuangan pribadi dengan fitur:
+- Tambah, edit, dan hapus transaksi (pemasukan & pengeluaran)
+- Kategori transaksi (makanan, transportasi, hiburan, dll.)
+- Ringkasan total saldo, pemasukan, dan pengeluaran
+- Tabel histori transaksi dan chart/grafik visual]
+
+Silakan eksekusi langkah-langkah berikut secara berurutan:
+
+1. Inisialisasi Peran (.agents):
+   Gunakan peran-peran berikut (buat folder .agents/):
+   - .agents/pm-prompt.md (Product Manager): Mengkaji ide dan menghasilkan requirements.md lengkap.
+   - .agents/backend-prompt.md (Backend Dev): Membaca requirements.md, membuat server REST API (Fastify/Node.js) dengan endpoint CRUD dummy data.
+   - .agents/ui-prompt.md (Frontend Dev): Membaca requirements.md, membangun UI modern (React + Vite + Vanilla CSS) dengan stats card, tabel transaksi, form modal, dan integrasi fetch API.
+   - .agents/deploy-prompt.md (DevOps): Membuat konfigurasi serverless Vercel (vercel.json dan api/ handlers) agar siap live.
+
+2. Eksekusi Pipeline (Sequence):
+   - STEP 1 (PM): Jalankan peran PM untuk membuat file requirements.md.
+   - STEP 2 (Backend): Jalankan peran Backend untuk membuat struktur folder backend/ dengan endpoints yang sesuai.
+   - STEP 3 (Frontend): Jalankan peran UI untuk membuat project Vite + React di folder frontend/ dan menghubungkannya dengan API.
+   - STEP 4 (DevOps): Setup konfigurasi vercel.json dan folder frontend/api/ untuk serverless function.
+
+3. Validasi & Pengujian:
+   - Pastikan aplikasi dapat dijalankan secara lokal (npm run dev).
+   - Pastikan seluruh fitur CRUD dapat beroperasi tanpa error.
+```
+
+### 💡 Tips Eksekusi Sequence
+1. **One-Shot vs Step-by-Step**: Prompt di atas bisa diberikan sekaligus (*one-shot autonomous*) karena AI memiliki kemampuan tool execution (`run_command`, `write_to_file`).
+2. **Kunci Sukses Pipeline**: Output dari agen sebelumnya (terutama `requirements.md`) menjadi *single source of truth* bagi agen berikutnya (Backend & Frontend), sehingga kode yang dibuat otomatis selaras dan tidak bentrok.
+
 ## 🛠️ Tech Stack
 
 | Layer | Teknologi |
@@ -179,7 +243,7 @@ Vercel build frontend/ (~1-2 menit)
 
 - ❌ **Tidak ada database** — data in-memory, reset saat serverless cold start
 - ❌ **Tidak ada autentikasi** — semua halaman bisa diakses langsung
-- ❌ **Tombol Edit/Hapus belum berfungsi** — hanya UI placeholder
+- ✅ **Tombol Edit & Hapus sudah aktif** — full CRUD modal & serverless endpoints
 - ❌ **Backend Fastify tidak di-deploy** — hanya untuk development lokal
 
 ---
@@ -188,7 +252,7 @@ Vercel build frontend/ (~1-2 menit)
 
 - [ ] Integrasi database (PostgreSQL / Supabase / MongoDB)
 - [ ] Sistem autentikasi (JWT / NextAuth)
-- [ ] Fungsi Edit & Hapus pengguna
+- [x] Fungsi Edit & Hapus pengguna
 - [ ] Dark/Light mode toggle
 - [ ] Export CSV/Excel
 - [ ] Role-based access control (RBAC)
